@@ -17,3 +17,5 @@ So I just wanna **practice** more on face recongnize, by detecting boss's face a
     - [ ] 构建模型
 - [ ] 老板过来切换桌面
   - [ ] 唤醒某个特定程序/图片
+
+- [ ] digital make up
