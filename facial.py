@@ -14,6 +14,7 @@ def draw_face_location(image_file, output_file="location.png"):
         draw.rectangle((l,t,r,b), outline="red")
     original_image.save(output_file, "PNG")
 
+
 def draw_face_landmarks(image_file, output_file="landmark.png"):
     image = face_recognition.load_image_file(image_file)
     face_landmarks_list = face_recognition.face_landmarks(image)
@@ -48,7 +49,7 @@ def parse_options():
                                      epilog=
 '''
 Examples:
-python main.py -x <path to xls file> -n <sheet number> -c <column name>
+python facial.py -x <path to xls file> -n <sheet number> -c <column name>
 '''
 
                                         )

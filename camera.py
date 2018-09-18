@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import cv2
+import moviepy.editor as mpy
+import face_recognition
+from PIL import Image, ImageDraw
+from numpy import array
 
 
 def capture_video(output_file="output.avi"):
     cap = cv2.VideoCapture(0)
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(output_file, -1, 20.0, (640,480))
 
     while(cap.isOpened()):
@@ -23,7 +28,33 @@ def capture_video(output_file="output.avi"):
             break
     # When everything done, release the capture
     cap.release()
+    out.release()
     cv2.destroyAllWindows()
+
+def compress_video(file_path):
+    pass
+
+def split_video2flames(file_path="output.avi"):
+    vid = mpy.VideoFileClip(file_path)
+    return [frame for frame in vid.iter_frames(dtype="uint8")]
+    
+def save_frames(frames):
+    for i in range(len(frames)):
+        path = f"images/{i}.jpg"
+        mark_face(array(frames[i]), path)
+
+def mark_face(image, output_file):
+    face_locations = face_recognition.face_locations(image)
+    if len(face_locations) > 0:
+        img = Image.fromarray(image)
+        draw = ImageDraw.Draw(img)
+        for t,r,b,l in face_locations:
+            draw.rectangle((l,t,r,b), outline="red")
+        img.save(output_file)
+
 
 if __name__ == "__main__":
     capture_video()
+    frames = split_video2flames()
+    save_frames(frames)
+
