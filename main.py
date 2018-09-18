@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+import argparse
 import face_recognition
 from PIL import Image, ImageDraw
 
@@ -39,6 +41,27 @@ def draw_face_landmarks(image_file, output_file="landmark.png"):
         draw.line(face_landmarks['right_eye'] + [face_landmarks['right_eye'][0]], fill=(0, 0, 0, 110), width=6)
     original_image.save(output_file, "PNG")
 
+def parse_options():
+    parser = argparse.ArgumentParser(usage='%(prog)s [options]',
+                                     description='draw face in picture @Qin',
+                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     epilog=
+'''
+Examples:
+python main.py -x <path to xls file> -n <sheet number> -c <column name>
+'''
+
+                                        )
+    parser.add_argument('-i','--image', type=str, help='image path')
+    args = parser.parse_args()
+
+    if args.image is None or not os.path.exists(args.image):
+        parser.error('image file not exist')
+        sys.exit(1)
+
+    return args
+
+
 if __name__ == "__main__":
-    image_file = "image.jpeg"
-    draw_face_landmarks(image_file)
+    args = parse_options()
+    draw_face_landmarks(args.image)
