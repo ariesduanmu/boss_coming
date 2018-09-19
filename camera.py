@@ -43,7 +43,7 @@ def save_frames(frames):
         path = f"images/{i}.jpg"
         mark_face(array(frames[i]), path)
 
-def mark_face(image, output_file):
+def locate_face(image, output_file):
     face_locations = face_recognition.face_locations(image)
     if len(face_locations) > 0:
         img = Image.fromarray(image)
@@ -51,6 +51,12 @@ def mark_face(image, output_file):
         for t,r,b,l in face_locations:
             draw.rectangle((l,t,r,b), outline="red")
         img.save(output_file)
+
+def gather_face_data(image):
+    face_landmarks_list = face_recognition.face_landmarks(image)
+    # normalize data
+    return face_landmarks_list
+
 
 
 if __name__ == "__main__":

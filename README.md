@@ -14,7 +14,12 @@ So I just wanna **practice** more on face recongnize, by detecting boss's face a
   - [ ] 捕捉面部
   - [ ] 面部识别
     - [ ] 图像收集/预处理
+        - [ ] 标准化数据
+        - [ ] 分为训练组和测试组
     - [ ] 构建模型
+        - [ ] k-mean 进行非监督分类
+        - [ ] 分类后手动标记
+    - [ ] 测试模型
 - [ ] 老板过来切换桌面
   - [ ] 唤醒某个特定程序/图片
 
