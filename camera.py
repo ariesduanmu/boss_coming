@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import numpy as np
 import cv2
 import moviepy.editor as mpy
@@ -36,12 +37,13 @@ def compress_video(file_path):
 
 def split_video2flames(file_path="output.avi"):
     vid = mpy.VideoFileClip(file_path)
-    return [frame for frame in vid.iter_frames(dtype="uint8")]
+    for frame in vid.iter_frames(dtype="uint8"):
+        yield frame
     
-def save_frames(frames):
-    for i in range(len(frames)):
-        path = f"images/{i}.jpg"
-        mark_face(array(frames[i]), path)
+def save_frame(frame, output):
+    image = Image.fromarray(frame)
+    image.save(output)
+        
 
 def locate_face(image, output_file):
     face_locations = face_recognition.face_locations(image)
@@ -60,7 +62,9 @@ def gather_face_data(image):
 
 
 if __name__ == "__main__":
-    capture_video()
-    frames = split_video2flames()
-    save_frames(frames)
+    dst = "my_images"
+    i = 0
+    for frame in split_video2flames("video/video_2.mov"):
+        save_frame(frame, os.path.join(dst, "me_{:02d}.jpg".format(i)))
+        i += 1
 
