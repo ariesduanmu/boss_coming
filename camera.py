@@ -6,7 +6,7 @@ import moviepy.editor as mpy
 import face_recognition
 from PIL import Image, ImageDraw
 from numpy import array
-
+from recognize_face import recognize_face_from_cv
 
 def capture_video(output_file="output.avi"):
     cap = cv2.VideoCapture(0)
@@ -42,25 +42,10 @@ def save_face_from_video():
     while(cap.isOpened()):
         ret, frame = cap.read()
         if ret==True:
-            small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-            rgb_small_frame = small_frame[:, :, ::-1]
-
-            if k % 3 == 0:
-
-                face_locations = face_recognition.face_locations(rgb_small_frame)
-                if len(face_locations) > 0:
-                    print(f"[*] {k} | with face: {len(face_locations)}")
-                for top, right, bottom, left in face_locations:
-                    top *= 4
-                    right *= 4
-                    bottom *= 4
-                    left *= 4
-
-                    cropped = frame[left:right, top:bottom]
-                    # cv2.imshow("cropped", cropped)
-                    cv2.imwrite("images/image_{}.jpg".format(k), cropped)
-            k += 1
+            for face in recognize_face_from_cv(frame):
+                cv2.imwrite("images/image_{}.jpg".format(k), face)
             cv2.imshow('Video', frame)
+            k += 1
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -102,7 +87,7 @@ if __name__ == "__main__":
     #     save_frame(frame, os.path.join(dst, "me_{:02d}.jpg".format(i)))
     #     i += 1
 
-    # save_face_from_video()
+    save_face_from_video()
 
     
 

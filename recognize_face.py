@@ -7,7 +7,7 @@ import face_recognition
 MAX_PIXEL = 256
 IMAGE_WIDTH = 64
 
-def resize_ratio(w, h):
+def _resize_ratio(w, h):
     if max(w, h) <= MAX_PIXEL:
         return 1
     else:
@@ -16,7 +16,7 @@ def resize_ratio(w, h):
         else:
             return h // MAX_PIXEL
 
-def resize_image_cv(frame, width=IMAGE_WIDTH):
+def _resize_image_cv(frame, width=IMAGE_WIDTH):
     def get_padding_size(image):
         h, w, _ = image.shape
         longest_edge = max(h, w)
@@ -41,7 +41,7 @@ def resize_image_cv(frame, width=IMAGE_WIDTH):
 
     return resized_image
 
-def resize_image_pil(frame, width=IMAGE_WIDTH):
+def _resize_image_pil(frame, width=IMAGE_WIDTH):
     w, h = frame.size
     s = max(w, h)
     resized_image = Image.new("RGB", (s, s))
@@ -50,36 +50,45 @@ def resize_image_pil(frame, width=IMAGE_WIDTH):
 
     return resized_image
 
-def recognize_face(frame, ratio):
+def _recognize_face(frame, ratio):
     face_locations = face_recognition.face_locations(frame)
     for top, right, bottom, left in face_locations:
         yield (top*ratio, right*ratio, bottom*ratio, left*ratio)
 
-def recognize_face_from_image_cv(image_path, output_path, resize=False):
-    frame = cv2.imread(image_path)
+def recognize_face_from_cv(frame, resize=False):
     h, w, k = frame.shape
-    ratio = resize_ratio(w, h)
+    ratio = _resize_ratio(w, h)
     small_frame = cv2.resize(frame, (0, 0), fx=1/ratio, fy=1/ratio)
     small_frame = small_frame[:, :, ::-1]
-    for top, right, bottom, left in recognize_face(small_frame, ratio):
-        cropped = frame[left:right, top:bottom]
+    for top, right, bottom, left in _recognize_face(small_frame, ratio):
+        cropped = frame[top:bottom, left:right]
         if resize:
-            cropped = resize_image_cv(cropped)
+            cropped = _resize_image_cv(cropped)
+        yield cropped
+
+def recognize_face_from_pil(frame, resize=False):
+    w, h = frame.size
+    ratio = _resize_ratio(w, h)
+    small_frame = frame.resize((w//ratio, h//ratio))
+    small_frame = np.array(small_frame)
+    for top, right, bottom, left in _recognize_face(small_frame, ratio):
+        cropped = frame.crop((left,top,right,bottom))
+        if resize:
+            cropped = _resize_image_pil(cropped)
+        yield cropped
+
+def recognize_face_from_image_cv(image_path, output_path, resize=False):
+    frame = cv2.imread(image_path)
+    for cropped in recognize_face_from_cv(frame, resize):
         cv2.imwrite(output_path, cropped)
 
 def recognize_face_from_image_pil(image_path, output_path, resize=False):
     frame = Image.open(image_path)
-    w, h = frame.size
-    ratio = resize_ratio(w, h)
-    small_frame = frame.resize((w//ratio, h//ratio))
-    small_frame = np.array(small_frame)
-    for top, right, bottom, left in recognize_face(small_frame, ratio):
-        cropped = frame.crop((left,top,right,bottom))
-        if resize:
-            cropped = resize_image_pil(cropped)
+    for cropped in recognize_face_from_pil(frame, resize):
         cropped.save(output_path)
 
 if __name__ == "__main__":
-    recognize_face_from_image_cv("lmq.jpg", "images/image.jpg", True)
+    recognize_face_from_image_cv("lmq.jpg", "images/image_1.jpg", True)
+    recognize_face_from_image_pil("lmq.jpg", "images/image_2.jpg", True)
 
 
