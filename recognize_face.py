@@ -36,7 +36,6 @@ def _resize_image_cv(frame, width=IMAGE_WIDTH):
     top, bottom, left, right = get_padding_size(frame)
     BLACK = [0, 0, 0]
     constant = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, value=BLACK)
-
     resized_image = cv2.resize(constant, (width, width))
 
     return resized_image
@@ -55,7 +54,19 @@ def _recognize_face(frame, ratio):
     for top, right, bottom, left in face_locations:
         yield (top*ratio, right*ratio, bottom*ratio, left*ratio)
 
-def recognize_face_from_cv(frame, resize=False):
+def draw_face_location_cv2(frame, location, name):
+    top, right, bottom, left = location
+    cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+    cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+    font = cv2.FONT_HERSHEY_DUPLEX
+    cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+
+def draw_face_location_pil(frame, location):
+    top, right, bottom, left = location
+    draw.rectangle((left, top, right, bottom), outline="red")
+    #draw name on it
+
+def recognize_face_from_cv(frame, resize=True):
     h, w, k = frame.shape
     ratio = _resize_ratio(w, h)
     small_frame = cv2.resize(frame, (0, 0), fx=1/ratio, fy=1/ratio)
@@ -66,7 +77,7 @@ def recognize_face_from_cv(frame, resize=False):
             cropped = _resize_image_cv(cropped)
         yield cropped
 
-def recognize_face_from_pil(frame, resize=False):
+def recognize_face_from_pil(frame, resize=True):
     w, h = frame.size
     ratio = _resize_ratio(w, h)
     small_frame = frame.resize((w//ratio, h//ratio))
@@ -77,12 +88,12 @@ def recognize_face_from_pil(frame, resize=False):
             cropped = _resize_image_pil(cropped)
         yield cropped
 
-def recognize_face_from_image_cv(image_path, output_path, resize=False):
+def recognize_face_from_image_cv(image_path, output_path, resize=True):
     frame = cv2.imread(image_path)
     for cropped in recognize_face_from_cv(frame, resize):
         cv2.imwrite(output_path, cropped)
 
-def recognize_face_from_image_pil(image_path, output_path, resize=False):
+def recognize_face_from_image_pil(image_path, output_path, resize=True):
     frame = Image.open(image_path)
     for cropped in recognize_face_from_pil(frame, resize):
         cropped.save(output_path)

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import face_recognition
+
 class FaceFilter():
     def __init__(self, reference_file_path, threshold = 0.6):
         image = face_recognition.load_image_file(reference_file_path)
