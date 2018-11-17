@@ -2,37 +2,76 @@
 import os
 import face_recognition
 import cv2
+import numpy as np
+import pickle
 from PIL import Image
 from imutils import paths
+from recognize_face import recognize_face_from_image_cv, save_image_cv
 
-IMAGE_SIZE = 64
+'''serialize faces
+'''
 
-def face_locations(imagePath):
-    image = face_recognition.load_image_file(imagePath)
-    face_locations = face_recognition.face_locations(image)
-    return [(l,t,r,b) for t,r,b,l in face_locations]
+def load_images_cv(dataset, resize=True):
+    '''load image from directory, extract faces
 
-def resize_width_padding(image, width=IMAGE_SIZE):
-    w, h = image.size
-    s = max(w, h)
-    resized_image = Image.new("RGB", (s, s))
-    resized_image.paste(image, ((s-w)//2, (s-h)//2))
-    resized_image.thumbnail((width,width))
-
-    return resized_image
-
-def save_face(dataset, save_dir):
+    Args:
+        dataset: direction with images in
+    Returns:
+        i: index of image file
+        k: index of face in image
+        dir_name: directory name where image in
+        file_name: image file name
+        face(Numpy): face data(cv)
+    '''
     imagePaths = list(paths.list_images(dataset))
     for i, imagePath in enumerate(imagePaths):
-        print("[INFO] processing image {}/{}".format(i + 1,len(imagePaths)))
-        name = imagePath.split(os.path.sep)[-1].split(".")[0]
-        imagePath = os.path.abspath(imagePath)
-        faces = face_locations(imagePath)
-        image = Image.open(imagePath)
-        for k, face in enumerate(faces):
-            img = image.crop(face)
-            img = resize_width_padding(img)
-            img.save(os.path.join(os.path.abspath(save_dir), "{}_{}.jpg".format(name, k+1)))
+        imagepaths = imagePath.split(os.path.sep)
+        dir_name = imagepaths[-2]
+        file_name = imagepaths[-1].split(".")[0]
+        print("[INFO] processing image {}/{}".format(i+1, len(imagePaths)))
+        for k, face in enumerate(recognize_face_from_image_cv(imagePath, resize)):
+            yield i, k, dir_name, file_name, face
+
+def serialize_faces(dataset, encoding_output):
+    '''serilize image in directory, save the serialize output to local
+
+    Args:
+        dataset: direction with images in
+        encoding_output: file path to save serialized data
+    '''
+    knownEncodings = []
+    knownNames = []
+
+    for encoding, name in encode_images(dataset):
+        knownEncodings.append(encoding)
+        knownNames.append(name)
+
+    print("[INFO] serializing encodings...")
+    data = {"encodings": knownEncodings, "names": knownNames}
+    with open(encoding_output, "wb+") as f:
+        f.write(pickle.dumps(data))
+
+def unserialize_faces(data_path):
+    '''unserialize face data
+    '''
+    with open(data_path, "rb") as f:
+        data = pickle.loads(f.read())
+    return data
+
+def encode_images(dataset, resize=True):
+    '''encode face
+    '''
+    for _, _, dir_name, _, face in load_images_cv(dataset, resize):
+        encoding = face_recognition.face_encodings(face)[0]
+        yield encoding, dir_name
+
+def save_face_cv(dataset, save_dir, resize=True):
+    '''save face images
+    '''
+    for i, k, _, file_name, face in load_images_cv(dataset, resize):
+        save_image_cv(face, "{}_{}_{}.jpg".format(save_dir, i, k))
 
 if __name__ == "__main__":
-    save_face("images","emma")
+    serialize_faces("dataset", "encodings.pickle")
+    print(unserialize_faces("encodings.pickle"))
+    

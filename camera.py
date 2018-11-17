@@ -2,6 +2,8 @@
 import cv2
 from recognize_face import recognize_face_from_cv
 
+'''open camera，read stream image data，face recognition，save video
+'''
 def save_face_from_webcam(save_video=False, output_file=None):
     cap = cv2.VideoCapture(0)
     if save_video:
@@ -11,13 +13,13 @@ def save_face_from_webcam(save_video=False, output_file=None):
     k = 0
     while(cap.isOpened()):
         ret, frame = cap.read()
+        print(type(frame))
         if ret==True:
             for face in recognize_face_from_cv(frame):
                 cv2.imwrite("images/image_{}.jpg".format(k), face)
             cv2.imshow('Video', frame)
             k += 1
             if save_video:
-                # 是否需要灰度处理
                 # video.write(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
                 video.write(frame)
 
